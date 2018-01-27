@@ -1,10 +1,11 @@
 package com.izapolsky.paintshop;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class Main {
 
@@ -13,23 +14,113 @@ public class Main {
 
         // this can be transformed into stream of requirements that will be transformed into one possible solution
 
+        PaintShop shop = new PaintShop();
+        Consumer<TaskPreference> taskConsumer = ((Consumer<TaskPreference>) taskPreference -> {
+            System.out.println("Parsed line: ");
+            System.out.println(taskPreference);
+
+        }).andThen(shop);
+
         paintshopParser(() -> {
             try {
-                return "-stdin".equals(args[0]) ? new InputStreamReader(System.in) :  new FileReader(args[0]);
+                return "-stdin".equals(args[0]) ? new InputStreamReader(System.in) : new FileReader(args[0]);
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
-        }).forEach(pref -> {
-            System.out.println("Parsed line: ");
-            System.out.println(pref);
-        });
+        }).forEach(taskConsumer);
 
+
+        Optional<Solution> result = StreamSupport.stream(shop.spliterator(), false).filter(s -> s.customersSatisfied() == shop.totalCustomers).findFirst();
+
+        if (!result.isPresent()) {
+            System.out.println("No Solution Exists");
+        } else {
+            System.out.println(result.get());
+        }
+    }
+
+    static class Solution {
+        final BitSet seenCustomers = new BitSet();
+        final int maxCost;
+        final int currentCost;
+        final PaintType[] paints;
+
+        Solution(BitSet toClone, int extraCustomer, int maxCost, int currentCost, PaintType[] paints) {
+            this.seenCustomers.or(toClone);
+            this.seenCustomers.set(extraCustomer);
+            this.maxCost = maxCost;
+            this.currentCost = currentCost;
+            this.paints = paints;
+        }
+
+        Optional<Solution> addPaint(int customer, PaintType paintType) {
+
+            if (sawCustomer(customer) || (currentCost == maxCost && paintType == PaintType.MATTE)) {
+                return Optional.empty();
+            }
+
+            //most inefficient part - in read-only paradigm we need to wrap previous values or copy whole array
+            PaintType[] paintTypes = new PaintType[paints.length + 1];
+            paintTypes[paints.length] = paintType;
+            System.arraycopy(paints, 0, paintTypes, 0, paints.length);
+            return Optional.of(new Solution(seenCustomers, customer, maxCost, currentCost + paintType.ordinal(), paintTypes));
+        }
+
+        boolean sawCustomer(int customer) {
+            return seenCustomers.get(customer);
+        }
+
+        int customersSatisfied() {
+            return seenCustomers.cardinality();
+        }
+
+        @Override
+        public String toString() {
+            //todo : fix to string to use stream / iterator. need join operation with space.
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < paints.length; i++) {
+                b.append(paints[i].letter);
+                if (i < paints.length - 1) {
+                    b.append(' ');
+                }
+            }
+
+            return b.toString();
+        }
+
+    }
+
+    enum PaintType {
+
+        GLOSS('G'),
+        MATTE('M');
+
+        final char letter;
+
+        PaintType(char letter) {
+            this.letter = letter;
+        }
+    }
+
+    static class PaintShop implements Consumer<TaskPreference>, Iterable<Solution> {
+        int totalCustomers;
+
+        @Override
+        public Iterator<Solution> iterator() {
+            return Collections.emptyIterator();
+        }
+
+        @Override
+        public void accept(TaskPreference taskPreference) {
+
+        }
     }
 
     /**
      * This method provides a lazy stream of TaskPreferences coming from given input. At the moment it constructs preferences
      * eagerly, which limits how many preferences can be processed simultaneously. This parser does not have any validation for
      * incoming data.
+     *
      * @param inputSupplier supplier that can provide a reader of task data
      * @return
      */
