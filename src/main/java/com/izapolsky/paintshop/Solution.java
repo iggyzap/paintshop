@@ -3,13 +3,17 @@ package com.izapolsky.paintshop;
 import java.util.BitSet;
 import java.util.Optional;
 
-class Solution {
-    final BitSet seenCustomers = new BitSet();
-    final int maxCost;
-    final int currentCost;
-    final Main.PaintType[] paints;
+/**
+ * A solution is an object that provides logic to record currently selected paints with current prices.
+ * Also adds helper methods to add new paint only if we have not exceeded price for current round
+ */
+public class Solution {
+    private final BitSet seenCustomers = new BitSet();
+    private final int maxCost;
+    private final int currentCost;
+    private final PaintType[] paints;
 
-    Solution(BitSet toClone, int extraCustomer, int maxCost, int currentCost, Main.PaintType[] paints) {
+    public Solution(BitSet toClone, int extraCustomer, int maxCost, int currentCost, PaintType[] paints) {
         this.seenCustomers.or(toClone);
         this.seenCustomers.set(extraCustomer);
         this.maxCost = maxCost;
@@ -17,24 +21,30 @@ class Solution {
         this.paints = paints;
     }
 
-    Optional<Solution> addPaint(int customer, Main.PaintType paintType) {
+    /**
+     * This method generates new optional solution by adding next customer with given paint type.
+     * @param customer customer number, will be used to restrict solution generation if given customer already present
+     * @param paintType gloss or matte, will be used to restrict solution generation if already at max price
+     * @return optional solution containing given customer's paint type
+     */
+    public Optional<Solution> addPaint(int customer, PaintType paintType) {
 
-        if (sawCustomer(customer) || (currentCost == maxCost && paintType == Main.PaintType.MATTE)) {
+        if (sawCustomer(customer) || (currentCost == maxCost && paintType == PaintType.MATTE)) {
             return Optional.empty();
         }
 
         //most inefficient part - in read-only paradigm we need to wrap previous values or copy whole array
-        Main.PaintType[] paintTypes = new Main.PaintType[paints.length + 1];
+        PaintType[] paintTypes = new PaintType[paints.length + 1];
         paintTypes[paints.length] = paintType;
         System.arraycopy(paints, 0, paintTypes, 0, paints.length);
         return Optional.of(new Solution(seenCustomers, customer, maxCost, currentCost + paintType.ordinal(), paintTypes));
     }
 
-    boolean sawCustomer(int customer) {
+    public boolean sawCustomer(int customer) {
         return seenCustomers.get(customer);
     }
 
-    int customersSatisfied() {
+    public int customersSatisfied() {
         return seenCustomers.cardinality();
     }
 

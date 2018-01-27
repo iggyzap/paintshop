@@ -29,7 +29,7 @@ public class Main {
         }).forEach(taskConsumer);
 
 
-        Optional<Solution> result = StreamSupport.stream(shop.spliterator(), false).filter(s -> s.customersSatisfied() == shop.totalCustomers).findFirst();
+        Optional<Solution> result = StreamSupport.stream(shop.spliterator(), false).filter(s -> s.customersSatisfied() == shop.customersToSatisfy()).findFirst();
 
         if (!result.isPresent()) {
             System.out.println("No Solution Exists");
@@ -38,68 +38,6 @@ public class Main {
         }
     }
 
-    enum PaintType {
-
-        GLOSS("G"),
-        MATTE("M");
-
-        final String letter;
-
-        PaintType(String letter) {
-            this.letter = letter;
-        }
-
-        final static Map<String, PaintType> lookup;
-        static {
-            HashMap<String, PaintType> map = new HashMap<>();
-            for (PaintType t: PaintType.values()) {
-                map.put(t.letter, t);
-            }
-            lookup = Collections.unmodifiableMap(map);
-        }
-
-        public static Optional<PaintType> fromString(String c) {
-            return lookup.get(c) == null ? Optional.empty() : Optional.of(lookup.get(c));
-        }
-    }
-
-    static class PaintShop implements Consumer<TaskPreference>, Iterable<Solution> {
-        int totalCustomers;
-        BucketRequirement[] bucketRequirements;
-
-        @Override
-        public Iterator<Solution> iterator() {
-            return Collections.emptyIterator();
-        }
-
-        @Override
-        public void accept(TaskPreference taskPreference) {
-            if (taskPreference instanceof TaskPreference.PaintShopPreference) {
-                bucketRequirements = new BucketRequirement[((TaskPreference.PaintShopPreference) taskPreference).paintBuckets];
-            }
-            if (taskPreference instanceof TaskPreference.UserPreference) {
-                handleUserRequirementPref((TaskPreference.UserPreference) taskPreference);
-            }
-        }
-
-        private void handleUserRequirementPref(TaskPreference.UserPreference pref) {
-            totalCustomers++;
-            pref.paints.forEach(p -> addRequirement(p, totalCustomers));
-        }
-
-        private void addRequirement(Paint p, int customer) {
-            if (bucketRequirements[p.number] == null) {
-                bucketRequirements[p.number] = new BucketRequirement();
-            }
-
-            bucketRequirements[p.number].requirements.put(customer, p.type);
-        }
-
-    }
-
-    static class BucketRequirement {
-        final Map<Integer, PaintType> requirements = new HashMap<>();
-    }
 
     /**
      * This method provides a lazy stream of TaskPreferences coming from given input. At the moment it constructs preferences
@@ -134,54 +72,6 @@ public class Main {
             }
             return list.iterator();
         };
-    }
-
-    private static interface TaskPreference {
-
-        //I'd use sealed interface here to limit of number of potential types
-        class PaintShopPreference implements TaskPreference {
-            final int paintBuckets;
-
-            private PaintShopPreference(int paintBuckets) {
-                this.paintBuckets = paintBuckets;
-            }
-
-            @Override
-            public String toString() {
-                return "PaintShopPreference{" +
-                        "paintBuckets=" + paintBuckets +
-                        '}';
-            }
-        }
-
-        class UserPreference implements TaskPreference {
-            List<Paint> paints = new ArrayList<>();
-
-            @Override
-            public String toString() {
-                return "UserPreference{" +
-                        "paints=" + paints +
-                        '}';
-            }
-        }
-    }
-
-    private static class Paint {
-        final int number;
-        PaintType type;
-
-        private Paint(int number, PaintType type) {
-            this.number = number;
-            this.type = type;
-        }
-
-        @Override
-        public String toString() {
-            return "Paint{" +
-                    "number=" + number +
-                    ", type=" + type +
-                    '}';
-        }
     }
 
     /**
