@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Main {
@@ -92,18 +91,32 @@ public class Main {
 
     enum PaintType {
 
-        GLOSS('G'),
-        MATTE('M');
+        GLOSS("G"),
+        MATTE("M");
 
-        final char letter;
+        final String letter;
 
-        PaintType(char letter) {
+        PaintType(String letter) {
             this.letter = letter;
+        }
+
+        final static Map<String, PaintType> lookup;
+        static {
+            HashMap<String, PaintType> map = new HashMap<>();
+            for (PaintType t: PaintType.values()) {
+                map.put(t.letter, t);
+            }
+            lookup = Collections.unmodifiableMap(map);
+        }
+
+        public static Optional<PaintType> fromString(String c) {
+            return lookup.get(c) == null ? Optional.empty() : Optional.of(lookup.get(c));
         }
     }
 
     static class PaintShop implements Consumer<TaskPreference>, Iterable<Solution> {
         int totalCustomers;
+        BucketRequirement[] bucketRequirements;
 
         @Override
         public Iterator<Solution> iterator() {
@@ -112,8 +125,31 @@ public class Main {
 
         @Override
         public void accept(TaskPreference taskPreference) {
-
+            if (taskPreference instanceof TaskPreference.PaintShopPreference) {
+                bucketRequirements = new BucketRequirement[((TaskPreference.PaintShopPreference) taskPreference).paintBuckets];
+            }
+            if (taskPreference instanceof TaskPreference.UserPreference) {
+                handleUserRequirementPref((TaskPreference.UserPreference) taskPreference);
+            }
         }
+
+        private void handleUserRequirementPref(TaskPreference.UserPreference pref) {
+            totalCustomers++;
+            pref.paints.forEach(p -> addRequirement(p, totalCustomers));
+        }
+
+        private void addRequirement(Paint p, int customer) {
+            if (bucketRequirements[p.number] == null) {
+                bucketRequirements[p.number] = new BucketRequirement();
+            }
+
+            bucketRequirements[p.number].requirements.put(customer, p.type);
+        }
+
+    }
+
+    static class BucketRequirement {
+        final Map<Integer, PaintType> requirements = new HashMap<>();
     }
 
     /**
@@ -139,8 +175,9 @@ public class Main {
                     list.add(pref);
                     for (int i = 0; i < colors.length; i += 2) {
                         int colorNumber = Integer.parseInt(colors[i]);
-                        boolean isMatte = "M".equals(colors[i + 1]);
-                        pref.paints.add(new Paint(colorNumber, isMatte));
+                        Optional<PaintType> p = PaintType.fromString(colors[i + 1]);
+
+                        pref.paints.add(new Paint(colorNumber, p.orElseThrow(IllegalArgumentException::new)));
                     }
                 }
             } catch (IOException e) {
@@ -169,7 +206,7 @@ public class Main {
         }
 
         class UserPreference implements TaskPreference {
-            List<Paint> paints = new ArrayList<Paint>();
+            List<Paint> paints = new ArrayList<>();
 
             @Override
             public String toString() {
@@ -180,28 +217,22 @@ public class Main {
         }
     }
 
-
     private static class Paint {
         final int number;
-        final boolean matte;
+        PaintType type;
 
-        private Paint(int number, boolean matte) {
+        private Paint(int number, PaintType type) {
             this.number = number;
-            this.matte = matte;
+            this.type = type;
         }
 
         @Override
         public String toString() {
             return "Paint{" +
                     "number=" + number +
-                    ", matte=" + matte +
+                    ", type=" + type +
                     '}';
         }
-    }
-
-    private static class PaintPref {
-        int[] glosses;
-        int[] mattes;
     }
 
     /**
