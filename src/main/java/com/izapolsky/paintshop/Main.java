@@ -26,6 +26,13 @@ public class Main {
 
     }
 
+    /**
+     * This method provides a lazy stream of TaskPreferences coming from given input. At the moment it constructs preferences
+     * eagerly, which limits how many preferences can be processed simultaneously. This parser does not have any validation for
+     * incoming data.
+     * @param inputSupplier supplier that can provide a reader of task data
+     * @return
+     */
     static Iterable<? extends TaskPreference> paintshopParser(Supplier<Reader> inputSupplier) {
 
         //first implementation is eager. I will be able to add laziness at later stage
