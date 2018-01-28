@@ -1,6 +1,5 @@
 package com.izapolsky.paintshop;
 
-import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -15,15 +14,19 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
     public PaintShop() {
         super(Long.MAX_VALUE, Spliterator.SORTED);
     }
+    private int totalCustomers;
+    private BucketRequirement[] bucketRequirements;
+    private Context ctx;
 
 
-
-
+    /**
+     * This class is required since we need to be able to recover execution context on next iteration.
+     */
     static class Context {
-        int currentPrice;
         int nonEmptyIterators = 0;
 
         final Iterator[] iterators;
+        final Solution[] solutionsRemembered;
 
         public void setIterator(int position, Iterator it) {
             if (it.hasNext()) {
@@ -44,20 +47,34 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
 
         Context(int paints) {
             this.iterators = new Iterator[paints];
+            this.solutionsRemembered = new Solution[paints];
         }
     }
 
-    private Context ctx;
-
+    /**
+     * This method generates a singular solution for given paint problem using depth-first search.
+     * It does not guarantee that solution will be satisfactory. It's extremely strange how
+     * we adapt generator ( yield statement) and tail-recursion into normal cycle logic
+     */
     @Override
     public boolean tryAdvance(Consumer<? super Solution> action) {
-        Solution sol = new Solution(ctx.currentPrice, ctx.currentPrice, new PaintType[0]);
-        for (int cursor = 0; cursor < bucketRequirements.length; cursor++) {
+        Solution sol = new Solution(0, new PaintType[0]);
+        int cursor = 0;
+        if (ctx.nonEmptyIterators > 0) {
+            //have to find last context & non-empty iterator. that will give start for cycle below
+            for (cursor = bucketRequirements.length - 1; cursor >= 0; cursor--) {
+                if (ctx.iterators[cursor] != null) {
+                    sol = ctx.solutionsRemembered[cursor];
+                    break;
+                }
+            }
+        }
+        for (; cursor < bucketRequirements.length; cursor++) {
             BucketRequirement currentReq = bucketRequirements[cursor];
             //iterable of current req should start with gloss
 
-            Iterator<Pair<PaintType, OptionalInt>> iterator = currentReq.iterator();
-            Iterator<Pair<PaintType, OptionalInt>> fromContext = ctx.iterators[cursor];
+            Iterator<Pair<PaintType, Set<Integer>>> iterator = currentReq.iterator();
+            Iterator<Pair<PaintType, Set<Integer>>> fromContext = ctx.iterators[cursor];
 
             //restore iteration
             if (fromContext != null && fromContext.hasNext()) {
@@ -65,20 +82,14 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
             } else {
                 ctx.setIterator(cursor, iterator);
             }
+            //take next available and descend
             while (iterator.hasNext()) {
-                Pair<PaintType, OptionalInt> p = iterator.next();
-                Optional<Solution> os = sol.addPaint(p.getRight(), p.getLeft());
-                if (!os.isPresent()) {
-                    //for current iteration no solution exists
-                    continue;
-                }
-                sol = os.get();
-                //step deeper
-                // need to add trail only if requirement is not empty
+                Pair<PaintType, Set<Integer>> p = iterator.next();
+                ctx.solutionsRemembered[cursor] = sol;
+                sol = sol.addPaint(p.getRight(), p.getLeft());
                 break;
             }
             ctx.clearIterator(cursor);
-
         }
 
         action.accept(sol);
@@ -90,24 +101,6 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
     public Comparator<? super Solution> getComparator() {
         return Comparator.comparingInt(Solution::getCost);
     }
-
-    static class BucketRequirement implements Iterable<Pair<PaintType, OptionalInt>> {
-        final SortedSet<Pair<PaintType, Integer>> requirements = new TreeSet<>();
-
-        @Override
-        public Iterator<Pair<PaintType, OptionalInt>> iterator() {
-            if (requirements.isEmpty()) {
-                return Collections.singleton(Pair.of(PaintType.GLOSS, OptionalInt.empty())).iterator();
-            }
-            //this order guarantees preference of glosses !
-            return Iterables.transform(requirements,
-                    p -> Pair.of(p.getLeft(), p.getRight() == null ? OptionalInt.empty() : OptionalInt.of(p.getRight()))).
-                    iterator();
-        }
-    }
-
-    private int totalCustomers;
-    private BucketRequirement[] bucketRequirements;
 
     /**
      * Paint shop knows how many customers it have to satisfy
@@ -128,6 +121,10 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
         }
     }
 
+    /**
+     * When we receive message about number of paint buckets this resets all bucket requirements for a batch
+     * @param taskPreference
+     */
     private void reInitialisePaintShop(TaskPreference.PaintShopPreference taskPreference) {
         bucketRequirements = new BucketRequirement[taskPreference.paintBuckets];
         //initialise context
@@ -137,13 +134,17 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
         }
     }
 
+    /**
+     * We record user's paint preferences here
+     * @param pref
+     */
     private void handleUserRequirementPref(TaskPreference.UserPreference pref) {
         int currentUser = totalCustomers++;
         pref.paints.forEach(p -> addRequirement(p, currentUser));
     }
 
     private void addRequirement(Paint p, int customer) {
-        bucketRequirements[p.number].requirements.add(Pair.of(p.type, customer));
+        bucketRequirements[p.number].add(p.type, customer);
     }
 
 }

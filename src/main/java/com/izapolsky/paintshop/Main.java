@@ -38,6 +38,7 @@ public class Main {
         }
     }
 
+
     protected static Optional<Solution> findSolution (PaintShop paintShop) {
         return StreamSupport.
                 stream(paintShop, false).
