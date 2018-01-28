@@ -38,6 +38,19 @@ public class MainTest {
         assertEquals("1 gloss", "G", s.get().toString());
     }
 
+
+    @Test
+    public void test2PaintMatteGloss() {
+        shop.accept(new TaskPreference.PaintShopPreference(2));
+        shop.accept(new TaskPreference.UserPreference(Arrays.asList(new Paint(0, PaintType.MATTE))));
+        shop.accept(new TaskPreference.UserPreference(Arrays.asList(new Paint(1, PaintType.GLOSS), new Paint(0, PaintType.GLOSS))));
+        Optional<Solution> s = Main.findSolution(shop);
+
+        assertTrue("Should have solution for 2 paints and 2 users", s.isPresent());
+        assertEquals("1 matte", "M G", s.get().toString());
+
+    }
+
     @Test
     public void findSolution1Paint2UsersNoSolution() {
         shop.accept(new TaskPreference.PaintShopPreference(1));
