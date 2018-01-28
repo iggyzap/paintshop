@@ -2,20 +2,27 @@ package com.izapolsky.paintshop;
 
 import java.util.BitSet;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * A solution is an object that provides logic to record currently selected paints with current prices.
  * Also adds helper methods to add new paint only if we have not exceeded price for current round
  */
 public class Solution {
-    private final BitSet seenCustomers = new BitSet();
+    private final BitSet seenCustomers;
     private final int maxCost;
     private final int currentCost;
     private final PaintType[] paints;
 
-    public Solution(BitSet toClone, int extraCustomer, int maxCost, int currentCost, PaintType[] paints) {
-        this.seenCustomers.or(toClone);
-        this.seenCustomers.set(extraCustomer);
+    public Solution(int maxCost, int currentCost, PaintType[] paints) {
+        this.seenCustomers = new BitSet();
+        this.maxCost = maxCost;
+        this.currentCost = currentCost;
+        this.paints = paints;
+    }
+
+    public Solution(BitSet passedIn, int maxCost, int currentCost, PaintType[] paints) {
+        this.seenCustomers = passedIn;
         this.maxCost = maxCost;
         this.currentCost = currentCost;
         this.paints = paints;
@@ -23,13 +30,15 @@ public class Solution {
 
     /**
      * This method generates new optional solution by adding next customer with given paint type.
-     * @param customer customer number, will be used to restrict solution generation if given customer already present
+     *
+     * @param customer  customer number, will be used to restrict solution generation if given customer already present
      * @param paintType gloss or matte, will be used to restrict solution generation if already at max price
      * @return optional solution containing given customer's paint type
      */
-    public Optional<Solution> addPaint(int customer, PaintType paintType) {
+    public Optional<Solution> addPaint(OptionalInt customer, PaintType paintType) {
+        paintType = customer.isPresent() ? paintType : PaintType.GLOSS;
 
-        if (sawCustomer(customer) || (currentCost == maxCost && paintType == PaintType.MATTE)) {
+        if ((customer.isPresent() && sawCustomer(customer.getAsInt())) || (currentCost == maxCost && paintType == PaintType.MATTE)) {
             return Optional.empty();
         }
 
@@ -37,7 +46,11 @@ public class Solution {
         PaintType[] paintTypes = new PaintType[paints.length + 1];
         paintTypes[paints.length] = paintType;
         System.arraycopy(paints, 0, paintTypes, 0, paints.length);
-        return Optional.of(new Solution(seenCustomers, customer, maxCost, currentCost + paintType.ordinal(), paintTypes));
+        BitSet toPass = new BitSet();
+        toPass.or(seenCustomers);
+        customer.ifPresent(toPass::set);
+
+        return Optional.of(new Solution(toPass, maxCost, currentCost + paintType.ordinal(), paintTypes));
     }
 
     public boolean sawCustomer(int customer) {

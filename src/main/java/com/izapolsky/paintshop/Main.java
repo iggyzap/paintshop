@@ -29,7 +29,7 @@ public class Main {
         }).forEach(taskConsumer);
 
 
-        Optional<Solution> result = StreamSupport.stream(shop.spliterator(), false).filter(s -> s.customersSatisfied() == shop.customersToSatisfy()).findFirst();
+        Optional<Solution> result = findSolution(shop);
 
         if (!result.isPresent()) {
             System.out.println("No Solution Exists");
@@ -38,6 +38,12 @@ public class Main {
         }
     }
 
+    protected static Optional<Solution> findSolution (PaintShop paintShop) {
+        return StreamSupport.
+                stream(paintShop.spliterator(), false).
+                filter(s -> s.customersSatisfied() == paintShop.customersToSatisfy()).
+                findFirst();
+    }
 
     /**
      * This method provides a lazy stream of TaskPreferences coming from given input. At the moment it constructs preferences

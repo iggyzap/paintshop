@@ -27,6 +27,13 @@ public interface TaskPreference {
     class UserPreference implements TaskPreference {
         public List<Paint> paints = new ArrayList<>();
 
+        public UserPreference() {
+        }
+
+        public UserPreference(List<Paint> paints) {
+            this.paints = paints;
+        }
+
         @Override
         public String toString() {
             return "UserPreference{" +

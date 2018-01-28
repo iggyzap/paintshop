@@ -6,7 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Enum that defines possible paint types and how to obtain them from string representation
+ * Enum that defines possible paint types and how to obtain them from string representation.
+ * TODO: replace usage of ordinal() as price indicator into constant price so price will be explicit
  */
 public enum PaintType {
 
