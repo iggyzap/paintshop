@@ -11,13 +11,14 @@ import java.util.stream.StreamSupport;
 public class Main {
 
 
-    public static void main(String... args) throws IOException {
+    public static void main(String... args) {
 
         PaintShop shop = new PaintShop();
         Consumer<TaskPreference> taskConsumer = ((Consumer<TaskPreference>) taskPreference -> {
-            System.out.println("Parsed line: ");
-            System.out.println(taskPreference);
-
+            if (args.length > 1 && "-v".equals(args[1])) {
+                System.out.println("Parsed line: ");
+                System.out.println(taskPreference);
+            }
         }).andThen(shop);
 
         paintshopParser(() -> {
@@ -28,7 +29,6 @@ public class Main {
             }
         }).forEach(taskConsumer);
 
-
         Optional<Solution> result = findSolution(shop);
 
         if (!result.isPresent()) {
@@ -38,13 +38,13 @@ public class Main {
         }
     }
 
-
     /**
      * This method find a first correct solution for given configured paint shop.
+     *
      * @param paintShop
      * @return
      */
-    protected static Optional<Solution> findSolution (PaintShop paintShop) {
+    protected static Optional<Solution> findSolution(PaintShop paintShop) {
         return StreamSupport.
                 stream(paintShop, false).
                 filter(s -> s.customersSatisfied() == paintShop.customersToSatisfy()).
@@ -52,16 +52,15 @@ public class Main {
     }
 
     /**
-     * This method provides a lazy stream of TaskPreferences coming from given input. At the moment it constructs preferences
-     * eagerly, which limits how many preferences can be processed simultaneously. This parser does not have any validation for
-     * incoming data.
+     * This method provides an iterable of TaskPreferences coming from given input.
+     * This parser does assume that incoming data correct.
      *
      * @param inputSupplier supplier that can provide a reader of task data
-     * @return
+     * @return an iterable that can be consumed
      */
     protected static Iterable<? extends TaskPreference> paintshopParser(Supplier<Reader> inputSupplier) {
-
-        //first implementation is eager. I will be able to add laziness at later stage
+        //there is no point in implementing this as completely lazy solution since we still have to gather all
+        // user's requirements to begin finding a solution
         return (Iterable<TaskPreference>) () -> {
             List<TaskPreference> list = new ArrayList<>();
             try (LineNumberReader lnr = new LineNumberReader(inputSupplier.get())) {

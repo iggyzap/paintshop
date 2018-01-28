@@ -1,11 +1,11 @@
 package com.izapolsky.paintshop;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -15,9 +15,30 @@ public class MainTest {
 
     private PaintShop shop = new PaintShop();
 
+    private PrintStream originalOut = System.out;
+
     @Before
     public void setUp() {
 
+    }
+
+    @After
+    public void tearDown() {
+        if (originalOut != System.out) {
+            System.setOut(originalOut);
+        }
+    }
+
+    @Test
+    public void testMain() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        System.setOut(ps);
+        Main.main(getClass().getResource("/sample_1.txt").getFile());
+        ps.flush();
+        LineNumberReader sr = new LineNumberReader(new InputStreamReader(new ByteArrayInputStream(baos.toByteArray())));
+
+        assertEquals("Solution from out", "G G M G G", sr.readLine());
     }
 
     @Test
