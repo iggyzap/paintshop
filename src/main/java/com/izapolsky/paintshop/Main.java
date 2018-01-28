@@ -40,7 +40,7 @@ public class Main {
 
     protected static Optional<Solution> findSolution (PaintShop paintShop) {
         return StreamSupport.
-                stream(paintShop.spliterator(), false).
+                stream(paintShop, false).
                 filter(s -> s.customersSatisfied() == paintShop.customersToSatisfy()).
                 findFirst();
     }

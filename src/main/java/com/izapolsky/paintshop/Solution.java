@@ -14,6 +14,10 @@ public class Solution {
     private final int currentCost;
     private final PaintType[] paints;
 
+    public int getCost() {
+        return currentCost;
+    }
+
     public Solution(int maxCost, int currentCost, PaintType[] paints) {
         this.seenCustomers = new BitSet();
         this.maxCost = maxCost;
@@ -38,7 +42,7 @@ public class Solution {
     public Optional<Solution> addPaint(OptionalInt customer, PaintType paintType) {
         paintType = customer.isPresent() ? paintType : PaintType.GLOSS;
 
-        if ((customer.isPresent() && sawCustomer(customer.getAsInt())) || (currentCost == maxCost && paintType == PaintType.MATTE)) {
+        if ((customer.isPresent() && sawCustomer(customer.getAsInt()))) {
             return Optional.empty();
         }
 

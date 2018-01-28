@@ -5,6 +5,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -21,16 +22,20 @@ public class MainTest {
     public void findSolution1Paint1UserGloss() {
         shop.accept(new TaskPreference.PaintShopPreference(1));
         shop.accept(new TaskPreference.UserPreference(Arrays.asList(new Paint(0, PaintType.GLOSS))));
+        Optional<Solution> s = Main.findSolution(shop);
 
-        assertTrue("Should have solution for 1 paint and 1 user", Main.findSolution(shop).isPresent());
+        assertTrue("Should have solution for 1 paint and 1 user", s.isPresent());
+        assertEquals("1 gloss", "G", s.get().toString());
     }
 
     @Test
     public void findSolution1PaintNoUsersGloss() {
         shop.accept(new TaskPreference.PaintShopPreference(1));
 //        shop.accept(new TaskPreference.UserPreference(Arrays.asList(new Paint(0, PaintType.GLOSS))));
+        Optional<Solution> s = Main.findSolution(shop);
 
-        assertTrue("Should have solution for 1 paint and 1 user", Main.findSolution(shop).isPresent());
+        assertTrue("Should have solution for 1 paint and 1 user", s.isPresent());
+        assertEquals("1 gloss", "G", s.get().toString());
     }
 
     @Test
@@ -42,13 +47,13 @@ public class MainTest {
         assertTrue("Should return no solution", !Main.findSolution(shop).isPresent());
     }
 
-
-    @Ignore("for now does not work")
     @Test
     public void findSolution1Paint1UserMatte() {
         shop.accept(new TaskPreference.PaintShopPreference(1));
         shop.accept(new TaskPreference.UserPreference(Arrays.asList(new Paint(0, PaintType.MATTE))));
+        Optional<Solution> s = Main.findSolution(shop);
 
-        assertTrue("Should have solution for 1 paint and 1 user", Main.findSolution(shop).isPresent());
+        assertTrue("Should have solution for 1 paint and 1 user", s.isPresent());
+        assertEquals("1 matte", "M", s.get().toString());
     }
 }

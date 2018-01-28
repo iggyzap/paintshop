@@ -9,7 +9,7 @@ $ echo -e "5\n1 G 2 G\n1 M 3 M" | java -jar target/paintshop-root-1.0-SNAPSHOT.j
 ```
 
 
-# A solution of paintshop problem is following (this one uses exhaustive search):
+# A solution of paintshop problem is following (this one uses depth-first search):
 1. Consider that we generate bounded stream of potential solutions, that will record a singular combination of colours,
     per variant of customer's preference. 
 1. A resulting solution will have a seen-by of users, so user's input will be only selected once.
