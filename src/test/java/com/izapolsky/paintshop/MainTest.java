@@ -4,8 +4,10 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Optional;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.*;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
 
@@ -16,6 +18,21 @@ public class MainTest {
     @Before
     public void setUp() {
 
+    }
+
+    @Test
+    public void testTaskParser() {
+        List<TaskPreference> prefs = new ArrayList<>();
+        Main.paintshopParser(() -> new StringReader("5\n 1 G\n2 G\n3 M\n4 G\n5 G")).forEach(prefs::add);
+
+        assertEquals("Size", 6, prefs.size());
+
+        assertEquals("Buckets", 5, ((TaskPreference.PaintShopPreference)prefs.get(0)).paintBuckets);
+        assertEquals("Paint user 1", Collections.singletonList(new Paint(0, PaintType.GLOSS)), ((TaskPreference.UserPreference)prefs.get(1)).paints);
+        assertEquals("Paint user 2", Collections.singletonList(new Paint(1, PaintType.GLOSS)), ((TaskPreference.UserPreference)prefs.get(2)).paints);
+        assertEquals("Paint user 3", Collections.singletonList(new Paint(2, PaintType.MATTE)), ((TaskPreference.UserPreference)prefs.get(3)).paints);
+        assertEquals("Paint user 4", Collections.singletonList(new Paint(3, PaintType.GLOSS)), ((TaskPreference.UserPreference)prefs.get(4)).paints);
+        assertEquals("Paint user 5", Collections.singletonList(new Paint(4, PaintType.GLOSS)), ((TaskPreference.UserPreference)prefs.get(5)).paints);
     }
 
     @Test
@@ -31,7 +48,6 @@ public class MainTest {
     @Test
     public void findSolution1PaintNoUsersGloss() {
         shop.accept(new TaskPreference.PaintShopPreference(1));
-//        shop.accept(new TaskPreference.UserPreference(Arrays.asList(new Paint(0, PaintType.GLOSS))));
         Optional<Solution> s = Main.findSolution(shop);
 
         assertTrue("Should have solution for 1 paint and 1 user", s.isPresent());
@@ -63,7 +79,7 @@ public class MainTest {
 
     }
 
-    protected TaskPreference.UserPreference userPref (Paint ... paints) {
+    protected TaskPreference.UserPreference userPref(Paint... paints) {
         return new TaskPreference.UserPreference(Arrays.asList(paints));
     }
 

@@ -1,5 +1,7 @@
 package com.izapolsky.paintshop;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
@@ -10,8 +12,6 @@ public class Main {
 
 
     public static void main(String... args) throws IOException {
-
-        // this can be transformed into stream of requirements that will be transformed into one possible solution
 
         PaintShop shop = new PaintShop();
         Consumer<TaskPreference> taskConsumer = ((Consumer<TaskPreference>) taskPreference -> {
@@ -39,6 +39,11 @@ public class Main {
     }
 
 
+    /**
+     * This method find a first correct solution for given configured paint shop.
+     * @param paintShop
+     * @return
+     */
     protected static Optional<Solution> findSolution (PaintShop paintShop) {
         return StreamSupport.
                 stream(paintShop, false).
@@ -54,7 +59,7 @@ public class Main {
      * @param inputSupplier supplier that can provide a reader of task data
      * @return
      */
-    static Iterable<? extends TaskPreference> paintshopParser(Supplier<Reader> inputSupplier) {
+    protected static Iterable<? extends TaskPreference> paintshopParser(Supplier<Reader> inputSupplier) {
 
         //first implementation is eager. I will be able to add laziness at later stage
         return (Iterable<TaskPreference>) () -> {
@@ -64,11 +69,11 @@ public class Main {
                 list.add(new TaskPreference.PaintShopPreference(paintsNumber));
 
                 for (String paintsLine = lnr.readLine(); paintsLine != null; paintsLine = lnr.readLine()) {
-                    String[] colors = paintsLine.split(" ");
+                    String[] colors = StringUtils.trim(paintsLine).split(" ");
                     TaskPreference.UserPreference pref = new TaskPreference.UserPreference();
                     list.add(pref);
                     for (int i = 0; i < colors.length; i += 2) {
-                        int colorNumber = Integer.parseInt(colors[i]);
+                        int colorNumber = Integer.parseInt(colors[i]) - 1;
                         Optional<PaintType> p = PaintType.fromString(colors[i + 1]);
 
                         pref.paints.add(new Paint(colorNumber, p.orElseThrow(IllegalArgumentException::new)));
@@ -81,12 +86,4 @@ public class Main {
         };
     }
 
-    /**
-     * Problem definition:
-     * You   want   to   mix   the   colors,   so   that:
-     *   There   is   just   one   batch   for   each   color,   and   it's   either   gloss   or   matte.
-     *   For   each   customer,   there   is   at   least   one   color   they   like.
-     *   You   make   as   few   mattes   as   possible   (because   they   are   more   expensive).
-
-     */
 }

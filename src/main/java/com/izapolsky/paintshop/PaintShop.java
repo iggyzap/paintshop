@@ -11,44 +11,15 @@ import java.util.function.Consumer;
  */
 public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implements Consumer<TaskPreference> {
 
-    public PaintShop() {
-        super(Long.MAX_VALUE, Spliterator.SORTED);
-    }
     private int totalCustomers;
     private BucketRequirement[] bucketRequirements;
-    private Context ctx;
-
+    private GenerationContext ctx;
 
     /**
-     * This class is required since we need to be able to recover execution context on next iteration.
+     * ...
      */
-    static class Context {
-        int nonEmptyIterators = 0;
-
-        final Iterator[] iterators;
-        final Solution[] solutionsRemembered;
-
-        public void setIterator(int position, Iterator it) {
-            if (it.hasNext()) {
-                if (iterators[position] != null && iterators[position].hasNext()) {
-                    throw new IllegalArgumentException(String.format("Tried to replace iterator at position %1$s too early!", position));
-                }
-                iterators[position] = it;
-                nonEmptyIterators++;
-            }
-        }
-
-        public void clearIterator(int position) {
-            if (iterators[position] != null && !iterators[position].hasNext()) {
-                iterators[position] = null;
-                nonEmptyIterators--;
-            }
-        }
-
-        Context(int paints) {
-            this.iterators = new Iterator[paints];
-            this.solutionsRemembered = new Solution[paints];
-        }
+    public PaintShop() {
+        super(Long.MAX_VALUE, Spliterator.SORTED);
     }
 
     /**
@@ -57,10 +28,11 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
      * we adapt generator ( yield statement) and tail-recursion into normal cycle logic
      */
     @Override
+    @SuppressWarnings("unchecked")
     public boolean tryAdvance(Consumer<? super Solution> action) {
-        Solution sol = new Solution(0, new PaintType[0]);
+        Solution sol = new Solution(new PaintType[0]);
         int cursor = 0;
-        if (ctx.nonEmptyIterators > 0) {
+        if (ctx.getNonEmptyIterators() > 0) {
             //have to find last context & non-empty iterator. that will give start for cycle below
             for (cursor = bucketRequirements.length - 1; cursor >= 0; cursor--) {
                 if (ctx.iterators[cursor] != null) {
@@ -94,12 +66,12 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
 
         action.accept(sol);
 
-        return ctx.nonEmptyIterators > 0;
+        return ctx.getNonEmptyIterators() > 0;
     }
 
     @Override
     public Comparator<? super Solution> getComparator() {
-        return Comparator.comparingInt(Solution::getCost);
+        return null;
     }
 
     /**
@@ -128,7 +100,7 @@ public class PaintShop extends Spliterators.AbstractSpliterator<Solution> implem
     private void reInitialisePaintShop(TaskPreference.PaintShopPreference taskPreference) {
         bucketRequirements = new BucketRequirement[taskPreference.paintBuckets];
         //initialise context
-        ctx = new Context(taskPreference.paintBuckets);
+        ctx = new GenerationContext(taskPreference.paintBuckets);
         for (int i = 0; i < bucketRequirements.length; i++) {
             bucketRequirements[i] = new BucketRequirement();
         }

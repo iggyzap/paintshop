@@ -37,7 +37,7 @@ public class BucketRequirement implements Iterable<Pair<PaintType, Set<Integer>>
     @Override
     public Iterator<Pair<PaintType, Set<Integer>>> iterator() {
         //that thing has to make cartesian product of all possible combinations of one paint
-        // we pay special attention to have glosses at first since the are cheaper
+        // we pay special attention to have glosses at first since they are cheaper
         return Iterables.concat(
                 new SetMultiplier(glosses, PaintType.GLOSS, 0),
                 //it does not make sense to get sets with empty mattes since they are not cheap

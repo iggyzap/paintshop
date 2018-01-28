@@ -11,22 +11,15 @@ import java.util.Set;
  */
 public class Solution {
     private final BitSet seenCustomers;
-    private final int currentCost;
     private final PaintType[] paints;
 
-    public int getCost() {
-        return currentCost;
-    }
-
-    public Solution(int currentCost, PaintType[] paints) {
+    public Solution(PaintType[] paints) {
         this.seenCustomers = new BitSet();
-        this.currentCost = currentCost;
         this.paints = paints;
     }
 
-    public Solution(BitSet passedIn, int currentCost, PaintType[] paints) {
+    public Solution(BitSet passedIn, PaintType[] paints) {
         this.seenCustomers = passedIn;
-        this.currentCost = currentCost;
         this.paints = paints;
     }
 
@@ -34,7 +27,7 @@ public class Solution {
      * This method generates new solution by adding next customer with given paint type.
      *
      * @param customers a set of customers that satisfy given paint bucket. can be empty
-     * @param paintType gloss or matte, will be used to restrict solution generation if already at max price
+     * @param paintType gloss or matte
      * @return resulting solution
      */
     public Solution addPaint(Set<Integer> customers, PaintType paintType) {
@@ -46,15 +39,16 @@ public class Solution {
         toPass.or(seenCustomers);
         //because OptionalInt does not implement Comparable!
 
-        for(Integer customer: customers) {
+        for (Integer customer : customers) {
             toPass.set(customer);
         }
 
-        return new Solution(toPass, currentCost + paintType.ordinal(), paintTypes);
+        return new Solution(toPass, paintTypes);
     }
 
     /**
      * Returns how many customers this solution satisfy
+     *
      * @return
      */
     public int customersSatisfied() {

@@ -1,13 +1,14 @@
 package com.izapolsky.paintshop;
 
+
 /**
  * Paint definition for parsing purposes
  */
 public class Paint {
-    final int number;
-    PaintType type;
+    public final int number;
+    public final PaintType type;
 
-    Paint(int number, PaintType type) {
+    public Paint(int number, PaintType type) {
         this.number = number;
         this.type = type;
     }
@@ -19,4 +20,14 @@ public class Paint {
                 ", type=" + type +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Paint paint = (Paint) o;
+        return number == paint.number &&
+                type == paint.type;
+    }
+
 }
