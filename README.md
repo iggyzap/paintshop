@@ -4,9 +4,29 @@ A simple test project to explore maximum of Java 8 functional features
 
 # Usage
 
+First variant:
 ```bash
-$ echo -e "5\n1 G 2 G\n1 M 3 M" | java -jar target/paintshop-root-<version>.jar -stdin
+$ echo -e "5\n1 G 2 G\n1 M 3 M" | java -jar target/paintshop-root-<version>.jar -stdin [-v]
 ```
+
+Different variant:
+```bash
+java -jar target/paintshop-root-<version>.jar <path to file> [-v]
+```
+
+# How to build
+
+Run
+
+```bash
+mvn clean verify
+```
+That will compile, test, gather code coverage and shade classes into 1 executable jar file that can be used
+to run via _java -jar_ command
+
+#Code coverage
+
+Will be [here](target/site/jacoco/index.html)
 
 #Problem Definition
 You want to mix the colors, so that:
